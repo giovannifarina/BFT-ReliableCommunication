@@ -1,4 +1,4 @@
-# Multi Hop Byzantine Reliable Broadcast with honest dealer madepractical
+# Multi Hop Byzantine Reliable Broadcast with honest dealer made practical
 
 Readme: https://www-npa.lip6.fr/~farina/rbcode
 
