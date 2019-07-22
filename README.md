@@ -25,4 +25,4 @@ Setting up the simulation environment on Ubuntu:
     - `git clone https://github.com/giovannifarina/Minimum-Hitting-Set-Fork.git MHS`
     - `make -C MHS -j`
     
--   Comment/uncomment/edit finals line in Reliable_Broadcast.py to set a specific simulation.
+-   Comment/uncomment/edit finals line in `Reliable_Broadcast.py` to set a specific simulation.
