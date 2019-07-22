@@ -9,6 +9,7 @@ import kdiamond
 import kpasted
 import generalized_wheel
 
+
 # Check the Minimum Vertex Cut (VC)
 def check_vertex_cut_external(data,k):
     if len(data) == 0:
@@ -32,6 +33,152 @@ def check_vertex_cut_external(data,k):
     else:
         return False
 
+
+def msgComplexity_dolev_maurer(n,k,filename):
+
+    G = nx.random_regular_graph(k, n)
+    while True:
+        if nx.node_connectivity(G) == k:
+            break
+        else:
+            G = nx.random_regular_graph(k, n)
+
+    source = random.sample(G.nodes(),1)[0]
+
+    PATHS_paths = {}
+    TOFORWARD_paths = {}
+    RECEIVED_paths = {}
+
+    for node in G.nodes():
+        PATHS_paths[node] = set()
+        TOFORWARD_paths[node] = set()
+        RECEIVED_paths[node] = set()
+
+    PATHSETS_pathsets = {}
+    TOFORWARD_pathsets = {}
+    RECEIVED_pathsets = {}
+
+    for node in G.nodes():
+        PATHSETS_pathsets[node] = set()
+        TOFORWARD_pathsets[node] = set()
+        RECEIVED_pathsets[node] = set()
+
+
+
+    msg_counter_paths = [0]*n
+    msg_counter_pathsets = [0]*n
+
+    t = 1
+
+    TOFORWARD_paths[source].add(())
+    TOFORWARD_pathsets[source].add(frozenset())
+
+    while True:
+
+        # print(t)
+
+        flag_noUpdate = True
+
+        for edge in G.edges():
+
+            send = edge[0]
+            recv = edge[1]
+
+
+            if recv != source and len(TOFORWARD_paths[send])>0:
+                for s in TOFORWARD_paths[send]:
+                    if recv not in s:
+                        if send != source:
+                            s_new = s + (send,)
+                            RECEIVED_paths[recv].add(s_new)
+                            msg_counter_paths[send]+=1
+                            flag_noUpdate = False
+                        else:
+                            s_new = ()
+                            RECEIVED_paths[recv].add(s_new)
+                            msg_counter_paths[send] += 1
+                            flag_noUpdate = False
+
+            send = edge[1]
+            recv = edge[0]
+
+            if recv != source and len(TOFORWARD_paths[send])>0:
+                for s in TOFORWARD_paths[send]:
+                    if recv not in s:
+                        if send != source:
+                            s_new = s + (send,)
+                            RECEIVED_paths[recv].add(s_new)
+                            msg_counter_paths[send]+=1
+                            flag_noUpdate = False
+                        else:
+                            s_new = ()
+                            RECEIVED_paths[recv].add(s_new)
+                            msg_counter_paths[send] += 1
+                            flag_noUpdate = False
+
+
+            ###########################################
+
+            send = edge[0]
+            recv = edge[1]
+
+
+            if recv != source and len(TOFORWARD_pathsets[send]) > 0:
+                for s in TOFORWARD_pathsets[send]:
+                    if recv not in s:
+                        if send != source:
+                            s_new = s.union([send])
+                            RECEIVED_pathsets[recv].add(s_new)
+                            msg_counter_pathsets[send] += 1
+                            flag_noUpdate = False
+                        else:
+                            s_new = frozenset()
+                            RECEIVED_pathsets[recv].add(s_new)
+                            msg_counter_pathsets[send] += 1
+                            flag_noUpdate = False
+
+
+            send = edge[1]
+            recv = edge[0]
+
+            if recv != source and len(TOFORWARD_pathsets[send]) > 0:
+                for s in TOFORWARD_pathsets[send]:
+                    if recv not in s:
+                        if send != source:
+                            s_new = s.union([send])
+                            RECEIVED_pathsets[recv].add(s_new)
+                            msg_counter_pathsets[send] += 1
+                            flag_noUpdate = False
+                        else:
+                            s_new = frozenset()
+                            RECEIVED_pathsets[recv].add(s_new)
+                            msg_counter_pathsets[send] += 1
+                            flag_noUpdate = False
+
+
+
+        for node in G.nodes():
+            TOFORWARD_paths[node].clear()
+            TOFORWARD_paths[node].update(RECEIVED_paths[node])
+            RECEIVED_paths[node].clear()
+            PATHS_paths[node].update(RECEIVED_paths[node])
+
+        for node in G.nodes():
+            TOFORWARD_pathsets[node].clear()
+            TOFORWARD_pathsets[node].update(RECEIVED_pathsets[node])
+            RECEIVED_pathsets[node].clear()
+            PATHSETS_pathsets[node].update(RECEIVED_pathsets[node])
+
+
+        if flag_noUpdate:
+            with open(filename,'a') as fd:
+                fd.write('n = ' + str(n) + '\t' + 'k = ' + str(k) + '\n')
+                fd.write('Msg complexity paths: ' + str(sum(msg_counter_paths)) + '\n')
+                fd.write('Msg complexity pathsets: ' + str(sum(msg_counter_pathsets)) + '\n')
+                fd.write('#\n')
+            break
+
+        t = t + 1
 
 def broadcast_bounded_multirand_pass(G, f, source, byz_set, CHANNEL_BOUND, filepath):
 
@@ -80,15 +227,18 @@ def broadcast_bounded_multirand_pass(G, f, source, byz_set, CHANNEL_BOUND, filep
         for node in G.nodes():
             if node not in byz_set:
                 if len(TO_FORWARD[node]) > 0:
-                    random.shuffle(TO_FORWARD[node])
 
+                    # nodes who delivered do not require further pathsets
                     node_to_contact = set(nx.neighbors(G, node))
                     node_to_contact.difference_update(NEIGHT_DEL[node])
                     if len(node_to_contact) == 0:
                         continue
 
+                    random.shuffle(TO_FORWARD[node])
+
                     msg_to_send_at_t[node] = []
                     num_messages_selected = 0
+
                     for i in range(len(TO_FORWARD[node]) - 1, -1, -1):
                         previous_length = len(node_to_contact)
                         if previous_length == 0 or num_messages_selected == CHANNEL_BOUND:
@@ -132,6 +282,7 @@ def broadcast_bounded_multirand_pass(G, f, source, byz_set, CHANNEL_BOUND, filep
 
         ### RECEIVE PHASE ###
         for node in G.nodes():
+
             if node not in byz_set:
 
                 if node in nodes_who_delivered:
@@ -175,7 +326,7 @@ def broadcast_bounded_multirand_pass(G, f, source, byz_set, CHANNEL_BOUND, filep
                     TO_FORWARD[node].clear()
                     TO_FORWARD[node].append(frozenset())
 
-        if len(nodes_who_delivered) == G.order() - f and not flag_allNodes_delivered:
+        if len(nodes_who_delivered) == G.order() - len(byz_set) and not flag_allNodes_delivered:
             t_broadcast = round
             flag_allNodes_delivered = True
 
@@ -366,7 +517,6 @@ def broadcast_bounded_multishor_pass_act(G,f,source,byz_set, CHANNEL_BOUND, file
     for node in G.nodes():
         BYZ_MSG[node] = set()
 
-
     # time
     round = 1
 
@@ -391,26 +541,37 @@ def broadcast_bounded_multishor_pass_act(G,f,source,byz_set, CHANNEL_BOUND, file
 
         flag_noFurtherMsgsExchanges = True
 
+        ### SEND PHASE ###
+
+        # MULTI-SHORTEST POLICY
         for node in G.nodes():
             if node not in byz_set:
                 if len(TO_FORWARD[node]) > 0:
-                    TO_FORWARD[node].sort(key=lambda x: len(x), reverse=True)
+
+                    # nodes who delivered do not require further pathsets
                     node_to_contact = set(nx.neighbors(G, node))
-                    for e in NEIGHT_DEL[node]:
-                        if e in node_to_contact:
-                            node_to_contact.remove(e)
+                    node_to_contact.difference_update(NEIGHT_DEL[node])
+                    if len(node_to_contact) == 0:
+                        continue
+
+                    # sort by the lenght of the pathset
+                    TO_FORWARD[node].sort(key=lambda x: len(x), reverse=True)
+
                     msg_to_send_at_t[node] = []
                     num_messages_selected = 0
+
                     for i in range(len(TO_FORWARD[node]) - 1, -1, -1):
                         previous_length = len(node_to_contact)
                         if previous_length == 0 or num_messages_selected == CHANNEL_BOUND:
                             break
                         msg = TO_FORWARD[node][i]
                         node_to_contact.intersection_update(msg)
+                        # check if it is an useful message
                         if len(node_to_contact) != previous_length:
                             msg_to_send_at_t[node].append(msg)
                             del TO_FORWARD[node][i]
                             num_messages_selected += 1
+
 
         for edge in G.edges():
 
@@ -606,7 +767,6 @@ def broadcast_bounded_multishor_pass_act(G,f,source,byz_set, CHANNEL_BOUND, file
     for node in byz_set:
         BYZ_ACTIVATION[node] = 0
 
-
     # time
     round = 1
 
@@ -631,22 +791,30 @@ def broadcast_bounded_multishor_pass_act(G,f,source,byz_set, CHANNEL_BOUND, file
 
         flag_noFurtherMsgsExchanges = True
 
+        # MULTI-SHORTEST POLICY
         for node in G.nodes():
             if node not in byz_set:
                 if len(TO_FORWARD[node]) > 0:
-                    TO_FORWARD[node].sort(key=lambda x: len(x), reverse=True)
+
+                    # nodes who delivered do not require further pathsets
                     node_to_contact = set(nx.neighbors(G, node))
-                    for e in NEIGHT_DEL[node]:
-                        if e in node_to_contact:
-                            node_to_contact.remove(e)
+                    node_to_contact.difference_update(NEIGHT_DEL[node])
+                    if len(node_to_contact) == 0:
+                        continue
+
+                    # sort by the lenght of the pathset
+                    TO_FORWARD[node].sort(key=lambda x: len(x), reverse=True)
+
                     msg_to_send_at_t[node] = []
                     num_messages_selected = 0
+
                     for i in range(len(TO_FORWARD[node]) - 1, -1, -1):
                         previous_length = len(node_to_contact)
                         if previous_length == 0 or num_messages_selected == CHANNEL_BOUND:
                             break
                         msg = TO_FORWARD[node][i]
                         node_to_contact.intersection_update(msg)
+                        # check if it is an useful message
                         if len(node_to_contact) != previous_length:
                             msg_to_send_at_t[node].append(msg)
                             del TO_FORWARD[node][i]
@@ -835,12 +1003,14 @@ def broadcast_bounded_multishor_pass_act(G,f,source,byz_set, CHANNEL_BOUND, file
     with open(filepath, 'a') as fd:
         fd.write('#\n')
 
+
 #### EDIT TO CHANGE SIMULATION PARAMETERS ####
 
 def simulate_bounded_multirand_randomreg_pass():
     filepath = 'results/bounded_multirand_randomreg_bound_pass.dat'
     for n in [100]:                              # EDIT the list values to set the network size
-        for k in range(3, int(n/2)+1):           # EDIT range parameters to set the network connectivity
+        # for k in range(3, int(n/2)+1):           # EDIT range parameters to set the network connectivity
+        for k in range(3, 11):                  # for certain values it may explode
 
             G = nx.random_regular_graph(k, n)
             while True:
@@ -866,7 +1036,8 @@ def simulate_bounded_multirand_randomreg_pass():
 def simulate_bounded_multirand_multiwheel_pass():
     filepath = 'results/bounded_multirand_multiwheel_bound_pass.dat'
     for n in [100]:  # EDIT the list values to set the network size
-        for k in range(4, int(n / 2) - 1, 2):  # EDIT range parameters to set the network connectivity
+        # for k in range(4, int(n / 2) - 1, 2):  # EDIT range parameters to set the network connectivity
+        for k in range(4, 13, 2):  # EDIT range parameters to set the network connectivity
 
             G = multipartite_wheel.generate_multipartite_wheel(n, k)
 
@@ -895,7 +1066,8 @@ def simulate_bounded_multirand_multiwheel_pass():
 def simulate_bounded_multirand_kdiamond_pass():
     filepath = 'results/bounded_multirand_kdiamond_bound_pass.dat'
     for n in [100]:                              # EDIT the list values to set the network size
-        for k in range(3, int(n / 2) + 1):  # EDIT range parameters to set the network connectivity
+        # for k in range(3, int(n / 2) + 1):  # EDIT range parameters to set the network connectivity
+        for k in range(3, 11):                  # for certain values it may explode
 
             G, nodes_to_analyze = kdiamond.generate_k_diamond(n, k)
             f = int((k - 1) / 2)
@@ -905,7 +1077,7 @@ def simulate_bounded_multirand_kdiamond_pass():
 
                 source = source[0]
 
-                for iteration_counter1 in range(5):
+                for iteration_counter1 in range(3):
                     byz_set = set(G.nodes())
                     byz_set.remove(source)
                     byz_set = set(random.sample(byz_set, f))
@@ -929,7 +1101,7 @@ def simulate_bounded_multirand_kpastedtree_pass():
 
                 source = source[0]
 
-                for iteration_counter1 in range(5):
+                for iteration_counter1 in range(3):
                     byz_set = set(G.nodes())
                     byz_set.remove(source)
                     byz_set = set(random.sample(byz_set, f))
@@ -938,7 +1110,6 @@ def simulate_bounded_multirand_kpastedtree_pass():
                         fd.write(str(n) + '\t' + str(k) + '\t' + str(f) + '\n')
 
                     broadcast_bounded_multirand_pass(G,f,source,byz_set, CHANNEL_BOUND, filepath)
-
 
 def simulate_bounded_multishor_randomreg_pass_act():
     filepath = 'results/bounded_multishort_randomreg_bound_pass_act.dat'
@@ -956,10 +1127,10 @@ def simulate_bounded_multishor_randomreg_pass_act():
 
             for iteration_counter1 in range(3):
 
-                for f in range(0, CHANNEL_BOUND):
+                for f in range(CHANNEL_BOUND):
 
                     byz_set = set(random.sample(G.nodes(), f))
-                    for iteration_counter2 in range(3):
+                    for iteration_counter2 in range(1):
                         with open(filepath, 'a') as fd:
                             fd.write(str(n) + '\t' + str(k) + '\t' + str(f) + '\n')
                         while True:
@@ -981,7 +1152,7 @@ def simulate_bounded_multishor_multiwheel_pass_act():
             # selecting a Byzantine placement
             for iteration_counter1 in range(3):
 
-                for f in range(0, CHANNEL_BOUND):
+                for f in range(CHANNEL_BOUND):
 
                     byz_set = set(random.sample(G.nodes(), f))
 
@@ -1011,11 +1182,11 @@ def simulate_bounded_multishor_kdiamond_pass_act():
 
             for source in nodes_to_analyze:
 
-                for f in range(0,CHANNEL_BOUND):
+                for f in range(CHANNEL_BOUND):
 
                     source = source[0]
 
-                    for iteration_counter1 in range(5):
+                    for iteration_counter1 in range(1):
                         byz_set = set(G.nodes())
                         byz_set.remove(source)
                         byz_set = set(random.sample(byz_set, f))
@@ -1038,9 +1209,9 @@ def simulate_bounded_multishor_kpastedtree_pass_act():
 
                 source = source[0]
 
-                for f in range(0,CHANNEL_BOUND):
+                for f in range(CHANNEL_BOUND):
 
-                    for iteration_counter1 in range(5):
+                    for iteration_counter1 in range(1):
                         byz_set = set(G.nodes())
                         byz_set.remove(source)
                         byz_set = set(random.sample(byz_set, f))
@@ -1049,7 +1220,6 @@ def simulate_bounded_multishor_kpastedtree_pass_act():
                             fd.write(str(n) + '\t' + str(k) + '\t' + str(f) + '\n')
 
                         broadcast_bounded_multishor_pass_act(G, CHANNEL_BOUND-1, source, byz_set, CHANNEL_BOUND, filepath)
-
 
 def simulate_bounded_multishor_multiwheel_pass_act_worstplace():
     filepath = 'results/bounded_multishort_multiwheel_bound_pass_act_worstplace.dat'
@@ -1112,6 +1282,8 @@ def simulate_bounded_multishor_gebwheel_pass_act_worstplace():
                     fd.write(str(n) + '\t' + str(k) + '\t' + str(f) + '\n')
 
                 broadcast_bounded_multishor_pass_act(G, f, source, byz_set, CHANNEL_BOUND, filepath)
+
+msgComplexity_dolev_maurer(n=20,k=3,filename='results/compare20_3.dat')
 
 simulate_bounded_multirand_randomreg_pass()
 simulate_bounded_multirand_multiwheel_pass()
