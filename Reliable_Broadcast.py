@@ -1182,9 +1182,9 @@ def simulate_bounded_multishor_kdiamond_pass_act():
 
             for source in nodes_to_analyze:
 
-                for f in range(CHANNEL_BOUND):
+                source = source[0]
 
-                    source = source[0]
+                for f in range(CHANNEL_BOUND):
 
                     for iteration_counter1 in range(1):
                         byz_set = set(G.nodes())
@@ -1283,17 +1283,17 @@ def simulate_bounded_multishor_gebwheel_pass_act_worstplace():
 
                 broadcast_bounded_multishor_pass_act(G, f, source, byz_set, CHANNEL_BOUND, filepath)
 
-msgComplexity_dolev_maurer(n=20,k=3,filename='results/compare20_3.dat')
+# msgComplexity_dolev_maurer(n=20,k=3,filename='results/compare20_3.dat')
 
-simulate_bounded_multirand_randomreg_pass()
-simulate_bounded_multirand_multiwheel_pass()
-simulate_bounded_multirand_kdiamond_pass()
-simulate_bounded_multirand_kpastedtree_pass()
+# simulate_bounded_multirand_randomreg_pass()
+# simulate_bounded_multirand_multiwheel_pass()
+# simulate_bounded_multirand_kdiamond_pass()
+# simulate_bounded_multirand_kpastedtree_pass()
 
-simulate_bounded_multishor_randomreg_pass_act()
-simulate_bounded_multishor_multiwheel_pass_act()
-simulate_bounded_multishor_kdiamond_pass_act()
-simulate_bounded_multishor_kpastedtree_pass_act()
+# simulate_bounded_multishor_randomreg_pass_act()
+# simulate_bounded_multishor_multiwheel_pass_act()
+# simulate_bounded_multishor_kdiamond_pass_act()
+# simulate_bounded_multishor_kpastedtree_pass_act()
 
-simulate_bounded_multishor_multiwheel_pass_act_worstplace()
-simulate_bounded_multishor_gebwheel_pass_act_worstplace()
+# simulate_bounded_multishor_multiwheel_pass_act_worstplace()
+# simulate_bounded_multishor_gebwheel_pass_act_worstplace()
