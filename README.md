@@ -4,7 +4,7 @@ Silvia Bonomi, Giovanni Farina [✉](mailto:giovanni.farina@lip6.fr), Sébastien
 
 Simulation Code
 
-Reference: https://arxiv.org/abs/1903.08988
+Reference: https://doi.org/10.1186/s13173-019-0090-x
 #
 The simulation code is composed by:
 
