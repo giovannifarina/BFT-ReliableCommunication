@@ -12,15 +12,15 @@ def generate_k_pasted(n,k):
     Future_Expanding_Nodes = []
     for i in range(1,k+1):
         Tree.add_edge(0,i)
-        Tree.node[i]['type'] = 'shared'
-    Tree.node[0]['type'] = 'root'
+        Tree.nodes[i]['type'] = 'shared'
+    Tree.nodes[0]['type'] = 'root'
     root_expansion = False
 
     for iteration in range(2*k,n):
         free_node_label += 1
         if Tree.degree(Expanding_node) < 3*k -3:
             Tree.add_edge(Expanding_node,free_node_label)
-            Tree.node[free_node_label]['type'] = 'shared'
+            Tree.nodes[free_node_label]['type'] = 'shared'
         else:
             # G.neighbors in a DiGraph gives the out edges
             if not root_expansion:
@@ -37,10 +37,10 @@ def generate_k_pasted(n,k):
                 Expanding_nodes = Future_Expanding_Nodes
                 Future_Expanding_Nodes = []
             Expanding_node = Expanding_nodes.pop()
-            Tree.node[Expanding_node]['type'] = 'internal'
+            Tree.nodes[Expanding_node]['type'] = 'internal'
             for i in range(k-1):
                 Tree.add_edge(Expanding_node, free_node_label)
-                Tree.node[free_node_label]['type'] = 'shared'
+                Tree.nodes[free_node_label]['type'] = 'shared'
                 free_node_label += 1
 
 
@@ -52,22 +52,22 @@ def generate_k_pasted(n,k):
     node = 0
     # types_inserted = set()
     while Tree.out_degree(node) > 0:
-        # types_inserted.add(Tree.node[node]['type'])
-        Nodes_To_Analize.append([node, Tree.node[node]['type']])
+        # types_inserted.add(Tree.nodes[node]['type'])
+        Nodes_To_Analize.append([node, Tree.nodes[node]['type']])
         node = next(Tree.neighbors(node))
-    Nodes_To_Analize.append([node, Tree.node[node]['type']])    # last leaf
+    Nodes_To_Analize.append([node, Tree.nodes[node]['type']])    # last leaf
 
 
     for node in Tree.nodes():
         mapping = []
-        if Tree.node[node]['type'] != 'shared':
+        if Tree.nodes[node]['type'] != 'shared':
             mapping.append(node)
             G.add_node(node)
-            G.node[node]['type'] = Tree.node[node]['type']
+            G.nodes[node]['type'] = Tree.nodes[node]['type']
             for i in range(k-1):
                 mapping.append(node_label)
                 G.add_node(node_label)
-                G.node[node_label]['type'] = Tree.node[node]['type']
+                G.nodes[node_label]['type'] = Tree.nodes[node]['type']
                 node_label += 1
             node_mapping[node] = mapping
         else:
@@ -75,10 +75,10 @@ def generate_k_pasted(n,k):
                 mapping.append(node)
             node_mapping[node] = mapping
             G.add_node(node)
-            G.node[node]['type'] = Tree.node[node]['type']
+            G.nodes[node]['type'] = Tree.nodes[node]['type']
 
     for node in Tree.nodes():
-        if Tree.node[node]['type'] != 'shared': # root or internal
+        if Tree.nodes[node]['type'] != 'shared': # root or internal
             for edge in Tree.out_edges(node):
                 for i in range(k):
                     G.add_edge(node_mapping[edge[0]][i], node_mapping[edge[1]][i])
